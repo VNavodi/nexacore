@@ -1,3 +1,0 @@
-ALTER TABLE app_users
-    ADD COLUMN IF NOT EXISTS full_name VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS company_name VARCHAR(255);
