@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { 
-  User, 
-  Mail, 
-  Building, 
-  ShieldCheck, 
-  Camera, 
-  MapPin, 
-  Phone, 
+import {
+  User,
+  Mail,
+  Building,
+  ShieldCheck,
+  Camera,
+  MapPin,
+  Phone,
   Save,
   Lock,
   ChevronRight
@@ -77,20 +77,20 @@ export default function ProfilePage() {
           <div className="lg:col-span-2">
             <Tabs defaultValue="general" className="w-full">
               <TabsList className="w-full justify-start bg-transparent border-b border-slate-200 rounded-none h-auto p-0 mb-8 space-x-8">
-                <TabsTrigger 
-                  value="general" 
+                <TabsTrigger
+                  value="general"
                   className="border-none data-[state=active]:bg-transparent data-[state=active]:border-b-3 data-[state=active]:border-[#e63946] data-[state=active]:text-[#e63946] data-[state=active]:shadow-none rounded-none px-0 pb-4 text-slate-500 font-semibold text-sm transition-all"
                 >
                   General Info
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="security" 
+                <TabsTrigger
+                  value="security"
                   className="border-none data-[state=active]:bg-transparent data-[state=active]:border-b-3 data-[state=active]:border-[#e63946] data-[state=active]:text-[#e63946] data-[state=active]:shadow-none rounded-none px-0 pb-4 text-slate-500 font-semibold text-sm transition-all"
                 >
                   Security
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="company" 
+                <TabsTrigger
+                  value="company"
                   className="border-none data-[state=active]:bg-transparent data-[state=active]:border-b-3 data-[state=active]:border-[#e63946] data-[state=active]:text-[#e63946] data-[state=active]:shadow-none rounded-none px-0 pb-4 text-slate-500 font-semibold text-sm transition-all"
                 >
                   Company Details
@@ -105,15 +105,9 @@ export default function ProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleSave} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName" className="text-slate-700 font-medium">First Name</Label>
-                          <Input id="firstName" defaultValue="John" className="h-11 border-slate-200 focus-visible:ring-[#1c1f26]" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName" className="text-slate-700 font-medium">Last Name</Label>
-                          <Input id="lastName" defaultValue="Doe" className="h-11 border-slate-200 focus-visible:ring-[#1c1f26]" />
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="fullname" className="text-slate-700 font-medium">Full Name</Label>
+                        <Input id="fullname" defaultValue="John" className="h-11 border-slate-200 focus-visible:ring-[#1c1f26]" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-slate-700 font-medium">Email Address</Label>
@@ -190,24 +184,14 @@ export default function ProfilePage() {
                       <Label htmlFor="orgName">Organization Name</Label>
                       <div className="relative">
                         <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input id="orgName" defaultValue="Acme Inventory Solutions" className="h-11 pl-10 border-slate-200" />
+                        <Input id="orgName" placeholder="Ex:Acme Inventory Solutions" className="h-11 pl-10 border-slate-200" />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="address">Business Address</Label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input id="address" defaultValue="123 Supply Chain Ave, Logistics City" className="h-11 pl-10 border-slate-200" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="taxId">Tax ID / VAT Number</Label>
-                        <Input id="taxId" defaultValue="VAT-99887766" className="h-11 border-slate-200" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="currency">Default Currency</Label>
-                        <Input id="currency" defaultValue="USD ($)" className="h-11 border-slate-200 bg-slate-50" readOnly />
+                        <Input id="address" placeholder="Ex:123 Supply Chain Ave, Logistics City" className="h-11 pl-10 border-slate-200" />
                       </div>
                     </div>
                     <div className="pt-4 flex justify-end">
