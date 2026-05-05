@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Lock, Mail, User, Building, ArrowRight, ArrowLeft } from "lucide-react"
+import { Eye, EyeOff, Lock, Mail, User, Building, ArrowRight, ArrowLeft, Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -13,34 +13,83 @@ export default function RegisterPage() {
   const [authMode, setAuthMode] = useState<"login" | "register">("register")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [identifier, setIdentifier] = useState("")
+  const [fullName, setFullName] = useState("")
+  const [companyName, setCompanyName] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [error, setError] = useState("")
   const router = useRouter()
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
     setIsLoading(true)
-    // Simulate authentication/registration delay
-    setTimeout(() => {
-      setIsLoading(false)
-      console.log(`${authMode === "login" ? "Logging in" : "Registering"}...`)
+
+    try {
+      const isRegister = authMode === "register"
+
+      if (isRegister && password.trim() !== confirmPassword.trim()) {
+        throw new Error("Password and confirm password do not match")
+      }
+
+      const endpoint = isRegister ? "register" : "login"
+      const username = identifier.includes("@") ? identifier.split("@")[0] : identifier
+
+      const payload = isRegister
+        ? {
+            username: username.trim(),
+            fullName: fullName.trim(),
+            companyName: companyName.trim(),
+            email: identifier.trim(),
+            phoneNumber: phoneNumber.trim(),
+            password: password.trim(),
+            confirmPassword: confirmPassword.trim(),
+          }
+        : { username: identifier.trim(), password: password.trim() }
+
+      const response = await fetch(`http://localhost:8080/api/v1/auth/${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || (isRegister ? "Registration failed" : "Login failed"))
+      }
+
+      const data = await response.json()
+      if (!data?.token) {
+        throw new Error("Token not returned from server")
+      }
+
+      localStorage.setItem("token", data.token)
       router.push("/")
-    }, 1500)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : authMode === "register" ? "Registration failed" : "Login failed")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f4f7f9] p-4 font-sans">
       <div className="w-full max-w-md space-y-8">
-        {/* Logo Section - Matching the sidebar branding */}
         <div className="flex flex-col items-center justify-center space-y-2">
           <div className="flex items-center gap-3">
             <div className="bg-[#e63946] text-white p-2 rounded-lg shadow-sm">
-              <svg 
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2.5" 
-                strokeLinecap="round" 
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               >
                 <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
@@ -58,26 +107,26 @@ export default function RegisterPage() {
               {authMode === "login" ? "Welcome back" : "Create an account"}
             </CardTitle>
             <CardDescription className="text-center text-slate-500">
-              {authMode === "login" 
-                ? "Enter your credentials to access your dashboard" 
+              {authMode === "login"
+                ? "Enter your credentials to access your dashboard"
                 : "Join our inventory management system today"}
             </CardDescription>
           </CardHeader>
           <CardContent className="px-8 pb-8">
             <form onSubmit={handleAuth} className="space-y-5">
-              
-              {/* Registration Specific Fields */}
               {authMode === "register" && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="fullname" className="text-sm font-medium text-slate-700">Full Name</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input 
+                      <Input
                         id="fullname"
-                        type="text" 
-                        placeholder="John Doe" 
+                        type="text"
+                        placeholder="John Doe"
                         className="pl-10 h-11 border-slate-300 focus-visible:ring-[#1c1f26]"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                         required
                       />
                     </div>
@@ -86,11 +135,28 @@ export default function RegisterPage() {
                     <Label htmlFor="company" className="text-sm font-medium text-slate-700">Company Name</Label>
                     <div className="relative">
                       <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input 
+                      <Input
                         id="company"
-                        type="text" 
-                        placeholder="Acme Corp" 
+                        type="text"
+                        placeholder="Acme Corp"
                         className="pl-10 h-11 border-slate-300 focus-visible:ring-[#1c1f26]"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium text-slate-700">Phone Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+1 555 123 4567"
+                        className="pl-10 h-11 border-slate-300 focus-visible:ring-[#1c1f26]"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
                         required
                       />
                     </div>
@@ -98,16 +164,19 @@ export default function RegisterPage() {
                 </>
               )}
 
-              {/* Shared Fields */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-slate-700">Email Address</Label>
+                <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                  {authMode === "login" ? "Username" : "Email Address"}
+                </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input 
+                  <Input
                     id="email"
-                    type="email" 
-                    placeholder="name@company.com" 
+                    type={authMode === "login" ? "text" : "email"}
+                    placeholder={authMode === "login" ? "admin" : "name@company.com"}
                     className="pl-10 h-11 border-slate-300 focus-visible:ring-[#1c1f26]"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
                     required
                   />
                 </div>
@@ -124,14 +193,16 @@ export default function RegisterPage() {
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input 
+                  <Input
                     id="password"
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="••••••••" 
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
                     className="pl-10 h-11 border-slate-300 focus-visible:ring-[#1c1f26]"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
@@ -141,19 +212,36 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Form Footer / Submit */}
+              {authMode === "register" && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      id="confirmPassword"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-10 h-11 border-slate-300 focus-visible:ring-[#1c1f26]"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center space-x-2 pt-1">
                 <Checkbox id="terms" className="border-slate-300 data-[state=checked]:bg-[#1c1f26]" required={authMode === "register"} />
-                <label 
-                  htmlFor="terms" 
+                <label
+                  htmlFor="terms"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-600 cursor-pointer"
                 >
                   {authMode === "login" ? "Keep me signed in" : "I agree to the Terms of Service"}
                 </label>
               </div>
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full h-11 bg-[#1c1f26] hover:bg-[#2d333d] text-white font-semibold transition-all duration-200"
                 disabled={isLoading}
               >
@@ -166,13 +254,19 @@ export default function RegisterPage() {
                   authMode === "login" ? "Sign In to Dashboard" : "Register Account"
                 )}
               </Button>
+
+              {error && (
+                <p className="text-sm text-red-600" role="alert">
+                  {error}
+                </p>
+              )}
             </form>
 
             <div className="mt-8 pt-6 border-t border-slate-100 text-center">
               {authMode === "login" ? (
                 <p className="text-sm text-slate-500">
                   New to the platform? {" "}
-                  <button 
+                  <button
                     onClick={() => setAuthMode("register")}
                     className="font-semibold text-[#e63946] hover:underline inline-flex items-center gap-1"
                   >
@@ -182,7 +276,7 @@ export default function RegisterPage() {
               ) : (
                 <p className="text-sm text-slate-500">
                   Already have an account? {" "}
-                  <button 
+                  <button
                     onClick={() => setAuthMode("login")}
                     className="font-semibold text-[#e63946] hover:underline inline-flex items-center gap-1"
                   >
@@ -193,7 +287,7 @@ export default function RegisterPage() {
             </div>
           </CardContent>
         </Card>
-        
+
         <div className="text-center text-xs text-slate-400">
           © 2024 Inventory Management System. All rights reserved.
         </div>

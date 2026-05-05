@@ -25,7 +25,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
       className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4"
     >
       {/* Left Section - Quick Actions */}
-      {/* <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <Button
           size="icon"
           className="h-8 w-8 rounded bg-[#e04f4f] text-white hover:bg-[#c94444]"
@@ -39,7 +39,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
-      </div> */}
+      </div>
 
       {/* Center - Search Bar */}
       <div className="flex-1 max-w-lg mx-4">

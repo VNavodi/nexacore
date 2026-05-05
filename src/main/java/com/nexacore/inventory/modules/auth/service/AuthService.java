@@ -27,7 +27,9 @@ public class AuthService {
         String fullName = request.fullName() == null ? "" : request.fullName().trim();
         String companyName = request.companyName() == null ? "" : request.companyName().trim();
         String email = request.email() == null ? "" : request.email().trim();
+        String phoneNumber = request.phoneNumber() == null ? "" : request.phoneNumber().trim();
         String password = request.password() == null ? "" : request.password().trim();
+        String confirmPassword = request.confirmPassword() == null ? "" : request.confirmPassword().trim();
 
         if (username.isEmpty()) {
             throw new IllegalArgumentException("Username is required");
@@ -40,6 +42,15 @@ public class AuthService {
         }
         if (password.isEmpty()) {
             throw new IllegalArgumentException("Password is required");
+        }
+        if (phoneNumber.isEmpty()) {
+            throw new IllegalArgumentException("Phone number is required");
+        }
+        if (confirmPassword.isEmpty()) {
+            throw new IllegalArgumentException("Confirm password is required");
+        }
+        if (!password.equals(confirmPassword)) {
+            throw new IllegalArgumentException("Password and confirm password do not match");
         }
 
         if (appUserRepository.existsByUsernameIgnoreCase(username)) {
@@ -54,6 +65,7 @@ public class AuthService {
             .fullName(fullName)
             .companyName(companyName)
             .email(email)
+            .phoneNumber(phoneNumber)
             .passwordHash(passwordEncoder.encode(password))
             .build();
 

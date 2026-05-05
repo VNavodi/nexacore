@@ -38,6 +38,9 @@ public class AppUser {
     @Column(name = "company_name")
     private String companyName;
 
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
     @Column(nullable = false)
     private String passwordHash;
 

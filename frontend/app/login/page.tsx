@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Lock, Mail, User, Building, ArrowRight, ArrowLeft } from "lucide-react"
+import { Eye, EyeOff, Lock, Mail, User, Building, ArrowRight, ArrowLeft, Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -16,7 +16,9 @@ export default function AuthPage() {
   const [identifier, setIdentifier] = useState("")
   const [fullName, setFullName] = useState("")
   const [companyName, setCompanyName] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const router = useRouter()
 
@@ -27,6 +29,11 @@ export default function AuthPage() {
 
     try {
       const isRegister = authMode === "register"
+
+      if (isRegister && password.trim() !== confirmPassword.trim()) {
+        throw new Error("Password and confirm password do not match")
+      }
+
       const endpoint = isRegister ? "register" : "login"
       const username = identifier.includes("@") ? identifier.split("@")[0] : identifier
 
@@ -36,7 +43,9 @@ export default function AuthPage() {
             fullName: fullName.trim(),
             companyName: companyName.trim(),
             email: identifier.trim(),
+            phoneNumber: phoneNumber.trim(),
             password: password.trim(),
+            confirmPassword: confirmPassword.trim(),
           }
         : { username: identifier.trim(), password: password.trim() }
 
@@ -140,6 +149,21 @@ export default function AuthPage() {
                       />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium text-slate-700">Phone Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+1 555 123 4567"
+                        className="pl-10 h-11 border-slate-300 focus-visible:ring-[#1c1f26]"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
                 </>
               )}
 
@@ -191,6 +215,24 @@ export default function AuthPage() {
                   </button>
                 </div>
               </div>
+
+              {authMode === "register" && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      id="confirmPassword"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-10 h-11 border-slate-300 focus-visible:ring-[#1c1f26]"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Form Footer / Submit */}
               <div className="flex items-center space-x-2 pt-1">
