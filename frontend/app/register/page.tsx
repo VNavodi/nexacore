@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
+import { saveUserProfile } from "@/lib/user-profile"
 
 export default function RegisterPage() {
   const [authMode, setAuthMode] = useState<"login" | "register">("register")
@@ -59,7 +60,16 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         const text = await response.text()
-        throw new Error(text || (isRegister ? "Registration failed" : "Login failed"))
+        let message = text
+        try {
+          const parsed = JSON.parse(text)
+          if (parsed?.message && typeof parsed.message === "string") {
+            message = parsed.message
+          }
+        } catch {
+          // Response is not JSON; use plain text as-is.
+        }
+        throw new Error(message || (isRegister ? "Registration failed" : "Login failed"))
       }
 
       const data = await response.json()
@@ -68,7 +78,13 @@ export default function RegisterPage() {
       }
 
       localStorage.setItem("token", data.token)
-      router.push("/")
+      saveUserProfile({
+        fullName: fullName.trim(),
+        email: identifier.trim(),
+        phoneNumber: phoneNumber.trim(),
+        companyName: companyName.trim(),
+      })
+      router.push("/dashboard")
     } catch (err) {
       setError(err instanceof Error ? err.message : authMode === "register" ? "Registration failed" : "Login failed")
     } finally {

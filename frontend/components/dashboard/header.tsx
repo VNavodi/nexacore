@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Bell, Search, ChevronDown, Plus, RefreshCw, Settings, HelpCircle, LogOut, User } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
@@ -13,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { fetchUserProfileFromServer, getInitials, getUserProfile, USER_PROFILE_UPDATED_EVENT } from "@/lib/user-profile"
 
 interface HeaderProps {
   sidebarCollapsed?: boolean
@@ -20,6 +22,29 @@ interface HeaderProps {
 
 export function Header({ sidebarCollapsed }: HeaderProps) {
   const router = useRouter()
+  const [fullName, setFullName] = useState("")
+  const [companyName, setCompanyName] = useState("")
+
+  useEffect(() => {
+    const loadProfile = () => {
+      const profile = getUserProfile()
+      setFullName(profile.fullName)
+      setCompanyName(profile.companyName)
+    }
+
+    loadProfile()
+    void fetchUserProfileFromServer().then((serverProfile) => {
+      if (!serverProfile) return
+      setFullName(serverProfile.fullName)
+      setCompanyName(serverProfile.companyName)
+    })
+    window.addEventListener(USER_PROFILE_UPDATED_EVENT, loadProfile)
+    window.addEventListener("storage", loadProfile)
+    return () => {
+      window.removeEventListener(USER_PROFILE_UPDATED_EVENT, loadProfile)
+      window.removeEventListener("storage", loadProfile)
+    }
+  }, [])
   return (
     <header
       className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4"
@@ -62,7 +87,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
               variant="ghost"
               className="flex items-center gap-1 px-2 text-sm text-gray-700 hover:bg-gray-100"
             >
-              Zylker
+              {companyName || "Organization"}
               <ChevronDown className="h-4 w-4 text-gray-500" />
             </Button>
           </DropdownMenuTrigger>
@@ -111,13 +136,16 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
               <Avatar className="h-8 w-8">
                 <AvatarImage src="" alt="User" />
                 <AvatarFallback className="bg-teal-500 text-white text-xs">
-                  JD
+                  {getInitials(fullName)}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel className="font-normal text-xs text-gray-500 -mt-1">
+              {fullName || "User"}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="cursor-pointer"
@@ -131,7 +159,10 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-red-600 cursor-pointer"
-              onClick={() => router.push("/login")}
+              onClick={() => {
+                localStorage.removeItem("token")
+                router.push("/login")
+              }}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Log out

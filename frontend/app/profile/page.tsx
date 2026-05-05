@@ -1,16 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   User,
   Mail,
   Building,
-  ShieldCheck,
   Camera,
   MapPin,
   Phone,
-  Save,
-  Lock,
   ChevronRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -20,14 +17,48 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout"
+import { fetchUserProfileFromServer, getInitials, getUserProfile, saveUserProfile } from "@/lib/user-profile"
 
 export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [companyName, setCompanyName] = useState("")
+
+  useEffect(() => {
+    let isMounted = true
+    const profile = getUserProfile()
+    if (isMounted) {
+      setFullName(profile.fullName)
+      setEmail(profile.email)
+      setPhoneNumber(profile.phoneNumber)
+      setCompanyName(profile.companyName)
+    }
+
+    void fetchUserProfileFromServer().then((serverProfile) => {
+      if (!isMounted || !serverProfile) return
+      setFullName(serverProfile.fullName)
+      setEmail(serverProfile.email)
+      setPhoneNumber(serverProfile.phoneNumber)
+      setCompanyName(serverProfile.companyName)
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setTimeout(() => setIsLoading(false), 1000)
+    saveUserProfile({
+      fullName: fullName.trim(),
+      email: email.trim(),
+      phoneNumber: phoneNumber.trim(),
+      companyName: companyName.trim(),
+    })
+    setTimeout(() => setIsLoading(false), 500)
   }
 
   return (
@@ -56,13 +87,13 @@ export default function ProfilePage() {
               <CardContent className="-mt-12 pb-8 flex flex-col items-center">
                 <div className="relative mb-4">
                   <div className="h-24 w-24 rounded-full bg-slate-100 flex items-center justify-center border-4 border-white shadow-md overflow-hidden text-2xl font-bold text-[#1c1f26]">
-                    JD
+                    {getInitials(fullName)}
                   </div>
                   <button className="absolute bottom-1 right-1 p-1.5 bg-[#e63946] text-white rounded-full border-2 border-white shadow-sm hover:bg-[#d62839] transition-colors">
                     <Camera className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <h2 className="text-lg font-bold text-[#1c1f26]">John Doe</h2>
+                <h2 className="text-lg font-bold text-[#1c1f26]">{fullName || "User"}</h2>
                 <p className="text-sm text-slate-500">Administrator</p>
                 <div className="mt-4">
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#e8f5e9] text-[#2e7d32]">
@@ -107,20 +138,35 @@ export default function ProfilePage() {
                     <form onSubmit={handleSave} className="space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="fullname" className="text-slate-700 font-medium">Full Name</Label>
-                        <Input id="fullname" defaultValue="John" className="h-11 border-slate-200 focus-visible:ring-[#1c1f26]" />
+                        <Input
+                          id="fullname"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="h-11 border-slate-200 focus-visible:ring-[#1c1f26]"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-slate-700 font-medium">Email Address</Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                          <Input id="email" defaultValue="john@company.com" className="h-11 pl-10 border-slate-200 focus-visible:ring-[#1c1f26]" />
+                          <Input
+                            id="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="h-11 pl-10 border-slate-200 focus-visible:ring-[#1c1f26]"
+                          />
                         </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone" className="text-slate-700 font-medium">Phone Number</Label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                          <Input id="phone" defaultValue="+1 (555) 000-0000" className="h-11 pl-10 border-slate-200 focus-visible:ring-[#1c1f26]" />
+                          <Input
+                            id="phone"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            className="h-11 pl-10 border-slate-200 focus-visible:ring-[#1c1f26]"
+                          />
                         </div>
                       </div>
                       <div className="pt-4 flex justify-end">
@@ -184,7 +230,13 @@ export default function ProfilePage() {
                       <Label htmlFor="orgName">Organization Name</Label>
                       <div className="relative">
                         <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input id="orgName" placeholder="Ex:Acme Inventory Solutions" className="h-11 pl-10 border-slate-200" />
+                        <Input
+                          id="orgName"
+                          placeholder="Ex:Acme Inventory Solutions"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          className="h-11 pl-10 border-slate-200"
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">

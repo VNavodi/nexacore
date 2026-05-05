@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 
 const navItems = [
-  { name: "Home", href: "/", icon: Home },
+  { name: "Home", href: "/dashboard", icon: Home },
   { name: "Inventory", href: "/items", icon: Package, hasSubmenu: true },
   { name: "Sales", href: "/sales-orders", icon: ShoppingCart, hasSubmenu: true },
   { name: "Purchases", href: "/purchase-orders", icon: Truck, hasSubmenu: true },

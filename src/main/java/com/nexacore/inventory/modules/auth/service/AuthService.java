@@ -3,6 +3,7 @@ package com.nexacore.inventory.modules.auth.service;
 import com.nexacore.inventory.modules.auth.dto.LoginRequest;
 import com.nexacore.inventory.modules.auth.dto.LoginResponse;
 import com.nexacore.inventory.modules.auth.dto.RegisterRequest;
+import com.nexacore.inventory.modules.auth.dto.UserProfileResponse;
 import com.nexacore.inventory.modules.auth.model.AppUser;
 import com.nexacore.inventory.modules.auth.repository.AppUserRepository;
 import com.nexacore.inventory.modules.auth.security.JwtUtil;
@@ -86,5 +87,18 @@ public class AuthService {
         }
 
         throw new IllegalArgumentException("Invalid credentials");
+    }
+
+    public UserProfileResponse getCurrentUserProfile(String username) {
+        AppUser user = appUserRepository.findByUsernameIgnoreCase(username)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return new UserProfileResponse(
+            user.getUsername(),
+            user.getFullName(),
+            user.getEmail(),
+            user.getPhoneNumber(),
+            user.getCompanyName()
+        );
     }
 }
