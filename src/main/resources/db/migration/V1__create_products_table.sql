@@ -8,6 +8,6 @@ CREATE TABLE IF NOT EXISTS products (
     cost_price DOUBLE PRECISION,
     selling_price DOUBLE PRECISION,
      reorder_level INTEGER,
-    stock_on_hand SET NOT NULL
+    stock_on_hand INTEGER NOT NULL DEFAULT 0
 );
     

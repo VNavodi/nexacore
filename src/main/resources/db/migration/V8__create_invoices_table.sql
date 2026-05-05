@@ -1,5 +1,5 @@
 CREATE TABLE invoices (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     customer_name VARCHAR(255) NOT NULL,
     invoice_number VARCHAR(100) NOT NULL UNIQUE,
     invoice_date DATE NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE invoices (
 );
 
 CREATE TABLE invoice_items (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     invoice_id BIGINT NOT NULL,
     item_name VARCHAR(255) NOT NULL,
     qty INT NOT NULL,
