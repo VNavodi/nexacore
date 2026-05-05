@@ -3,7 +3,7 @@ services:
     build: .
     # container_name removed to avoid confusion; use service name 'nexacore-api' for Docker Compose commands
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://nexacore-db:5432/inventorydb
       SPRING_DATASOURCE_USERNAME: nexacore
