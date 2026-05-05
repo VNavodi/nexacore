@@ -47,6 +47,7 @@ public class SecurityConfig {
             .formLogin(form -> form.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/swagger-ui.html",
@@ -57,7 +58,9 @@ public class SecurityConfig {
                     "/api/v1/integrations/**",
                     "/api/v1/products/**",
                     "/api/v1/inventory/**",
-                    "/api/v1/invoices/**"
+                    "/api/v1/invoices/**",
+                    "/api/v1/purchase-orders",
+                    "/api/v1/purchase-orders/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
