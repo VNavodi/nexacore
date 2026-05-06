@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Sidebar } from "./sidebar"
 import { Header } from "./header"
 
@@ -9,7 +10,24 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const router = useRouter()
+  const [hasSession] = useState(() => {
+    if (typeof window === "undefined") {
+      return false
+    }
+    return Boolean(localStorage.getItem("token"))
+  })
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  useEffect(() => {
+    if (!hasSession) {
+      router.replace("/login")
+    }
+  }, [hasSession, router])
+
+  if (!hasSession) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-[#f4f6f8]">

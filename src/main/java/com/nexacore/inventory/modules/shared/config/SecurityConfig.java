@@ -55,13 +55,16 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/actuator/**",
                     "/api/v1/auth/**",
-                    "/api/v1/integrations/**",
+                    "/api/v1/sales/webhook"
+                ).permitAll()
+                .requestMatchers(
                     "/api/v1/products/**",
                     "/api/v1/inventory/**",
                     "/api/v1/invoices/**",
-                    "/api/v1/purchase-orders",
-                    "/api/v1/purchase-orders/**"
-                ).permitAll()
+                    "/api/v1/purchase-orders/**",
+                    "/api/v1/sync/**",
+                    "/api/v1/integrations/**"
+                ).authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

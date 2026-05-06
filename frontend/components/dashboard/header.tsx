@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { clearAuthSession } from "@/lib/auth-fetch"
 import { fetchUserProfileFromServer, getInitials, getUserProfile, USER_PROFILE_UPDATED_EVENT } from "@/lib/user-profile"
 
 interface HeaderProps {
@@ -160,7 +161,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
             <DropdownMenuItem 
               className="text-red-600 cursor-pointer"
               onClick={() => {
-                localStorage.removeItem("token")
+                clearAuthSession()
                 router.push("/login")
               }}
             >

@@ -1,3 +1,5 @@
+import { authFetch } from "@/lib/auth-fetch"
+
 export interface UserProfile {
   fullName: string
   email: string
@@ -70,16 +72,11 @@ export async function fetchUserProfileFromServer(): Promise<UserProfile | null> 
     return null
   }
 
-  const token = localStorage.getItem("token")
-  if (!token) {
+  if (!localStorage.getItem("token")) {
     return null
   }
 
-  const response = await fetch("http://localhost:8080/api/v1/auth/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+  const response = await authFetch("http://localhost:8080/api/v1/auth/me")
 
   if (!response.ok) {
     return null

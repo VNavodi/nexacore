@@ -165,7 +165,7 @@ public class PurchaseOrderService {
                 .orderedQty(orderedQty)
                 .unitCost(unitCost)
                 .expectedDate(lineRequest.expectedDate())
-                .receivedQty(lineRequest.receivedQty() == null ? 0 : lineRequest.receivedQty())
+                .receivedQty(0)
                 .build();
 
             existing.getItems().add(line);

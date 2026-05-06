@@ -38,6 +38,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Eye } from "lucide-react"
+import { authFetch, getAuthHeaders } from "@/lib/auth-fetch"
 
 type PurchaseOrderLine = {
   id: number
@@ -77,17 +78,6 @@ type FormLine = {
 }
 
 const API_BASE_URL = "http://localhost:8080/api/v1/purchase-orders"
-
-function getAuthHeaders() {
-  const headers: Record<string, string> = {}
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token")
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
-  }
-  return headers
-}
 
 async function parseErrorMessage(response: Response, fallbackMessage: string) {
   const text = await response.text()
@@ -234,7 +224,7 @@ export function PurchasesContent() {
     setIsLoading(true)
     setError("")
     try {
-      const response = await fetch(API_BASE_URL, {
+      const response = await authFetch(API_BASE_URL, {
         headers: {
           ...getAuthHeaders(),
         },
@@ -361,7 +351,7 @@ export function PurchasesContent() {
       const url = isEditing && editingId ? `${API_BASE_URL}/${editingId}` : API_BASE_URL
       const method = isEditing ? "PUT" : "POST"
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -402,7 +392,7 @@ export function PurchasesContent() {
     if (!confirm("Delete this purchase order? This action cannot be undone.")) return
     setIsSaving(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/${id}`, {
+      const response = await authFetch(`${API_BASE_URL}/${id}`, {
         method: "DELETE",
         headers: {
           ...getAuthHeaders(),

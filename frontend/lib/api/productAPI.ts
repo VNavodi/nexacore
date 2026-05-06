@@ -1,3 +1,5 @@
+import { authFetch, getAuthHeaders } from "@/lib/auth-fetch"
+
 // API Base URL - prefer env var; fallback supports local Spring on 8081.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 const API_BASE_URLS = API_BASE_URL
@@ -49,7 +51,7 @@ export class ProductAPI {
     for (let i = 0; i < API_BASE_URLS.length; i++) {
       const baseUrl = API_BASE_URLS[i]
       try {
-        const response = await fetch(`${baseUrl}${path}`, init)
+        const response = await authFetch(`${baseUrl}${path}`, init)
         lastResponse = response
 
         // Retry next base URL only when first local URL is forbidden/unavailable.
@@ -76,17 +78,6 @@ export class ProductAPI {
     throw lastError ?? new Error("Network request failed")
   }
 
-  private static getAuthHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {}
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token")
-      if (token) {
-        headers.Authorization = `Bearer ${token}`
-      }
-    }
-    return headers
-  }
-
   private static async getErrorMessage(response: Response, fallback: string): Promise<string> {
     const text = await response.text()
     if (!text) return fallback
@@ -110,7 +101,7 @@ export class ProductAPI {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...this.getAuthHeaders(),
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(data),
     })
@@ -133,7 +124,7 @@ export class ProductAPI {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...this.getAuthHeaders(),
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(legacyPayload),
       })
@@ -165,7 +156,7 @@ export class ProductAPI {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        ...this.getAuthHeaders(),
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(data),
     })
@@ -184,7 +175,7 @@ export class ProductAPI {
   static async getAllProducts(): Promise<ProductResponse[]> {
     const response = await this.requestWithFallback("/products", {
       method: "GET",
-      headers: this.getAuthHeaders(),
+      headers: getAuthHeaders(),
     })
 
     if (!response.ok) {
@@ -201,7 +192,7 @@ export class ProductAPI {
   static async getProductById(id: number): Promise<ProductResponse> {
     const response = await this.requestWithFallback(`/products/${id}`, {
       method: "GET",
-      headers: this.getAuthHeaders(),
+      headers: getAuthHeaders(),
     })
 
     if (!response.ok) {
@@ -218,7 +209,7 @@ export class ProductAPI {
   static async deleteProduct(id: number): Promise<void> {
     const response = await this.requestWithFallback(`/products/${id}`, {
       method: "DELETE",
-      headers: this.getAuthHeaders(),
+      headers: getAuthHeaders(),
     })
 
     if (!response.ok) {
@@ -235,7 +226,7 @@ export class ProductAPI {
   ): Promise<ProductResponse[]> {
     const response = await this.requestWithFallback(`/products/category/${category}`, {
       method: "GET",
-      headers: this.getAuthHeaders(),
+      headers: getAuthHeaders(),
     })
 
     if (!response.ok) {
@@ -252,7 +243,7 @@ export class ProductAPI {
   static async getLowStockProducts(): Promise<ProductResponse[]> {
     const response = await this.requestWithFallback("/products/low-stock", {
       method: "GET",
-      headers: this.getAuthHeaders(),
+      headers: getAuthHeaders(),
     })
 
     if (!response.ok) {
@@ -270,7 +261,7 @@ export class ProductAPI {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        ...this.getAuthHeaders(),
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(data),
     })

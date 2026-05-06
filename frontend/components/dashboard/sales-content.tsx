@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useId } from "react"
 import { Plus, Trash2, Eye, TrendingDown } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog"
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field"
 import { toast } from "sonner"
+import { authFetch, getAuthHeaders } from "@/lib/auth-fetch"
 
 const SALES_API_BASE_URLS = process.env.NEXT_PUBLIC_API_URL
   ? [process.env.NEXT_PUBLIC_API_URL]
@@ -55,16 +56,23 @@ interface InvoiceRecord {
   }[]
 }
 
-export function SalesContent() {
-  const getAuthHeaders = () => {
-    const headers: Record<string, string> = {}
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token")
-      if (token) headers.Authorization = `Bearer ${token}`
+async function fetchInvoicesWithAuth(baseUrls: string[]): Promise<InvoiceRecord[]> {
+  for (const baseUrl of baseUrls) {
+    try {
+      const response = await authFetch(`${baseUrl}/v1/invoices`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      })
+      if (response.ok) return response.json()
+    } catch {
+      // try next base URL
     }
-    return headers
   }
+  return []
+}
 
+export function SalesContent() {
+  const invoiceSeed = useId().replace(/:/g, "")
   const postInvoiceWithFallback = async (payload: unknown) => {
     let lastResponse: Response | null = null
     let lastError: Error | null = null
@@ -72,7 +80,7 @@ export function SalesContent() {
     for (let i = 0; i < SALES_API_BASE_URLS.length; i++) {
       const baseUrl = SALES_API_BASE_URLS[i]
       try {
-        const response = await fetch(`${baseUrl}/v1/invoices`, {
+        const response = await authFetch(`${baseUrl}/v1/invoices`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -99,21 +107,6 @@ export function SalesContent() {
     throw lastError ?? new Error("Unable to reach invoice API")
   }
 
-  const fetchInvoices = async (): Promise<InvoiceRecord[]> => {
-    for (const baseUrl of SALES_API_BASE_URLS) {
-      try {
-        const response = await fetch(`${baseUrl}/v1/invoices`, {
-          method: "GET",
-          headers: getAuthHeaders(),
-        })
-        if (response.ok) return response.json()
-      } catch {
-        // try next base URL
-      }
-    }
-    return []
-  }
-
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([])
   const [invoiceRecords, setInvoiceRecords] = useState<InvoiceRecord[]>([])
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(true)
@@ -125,13 +118,14 @@ export function SalesContent() {
   const [appliedEndDate, setAppliedEndDate] = useState("")
 
   const [customerName, setCustomerName] = useState("")
-  const [invoiceNumber, setInvoiceNumber] = useState(`INV-${Date.now()}`)
+  const [invoiceSequence, setInvoiceSequence] = useState(1)
   const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().split("T")[0])
+  const invoiceNumber = `INV-${invoiceSeed}-${invoiceSequence}`
 
   const loadInvoices = async () => {
     setIsLoadingInvoices(true)
     try {
-      const data = await fetchInvoices()
+      const data = await fetchInvoicesWithAuth(SALES_API_BASE_URLS)
       setInvoiceRecords(data)
     } catch {
       toast.error("Failed to load invoice list")
@@ -141,7 +135,14 @@ export function SalesContent() {
   }
 
   useEffect(() => {
-    void loadInvoices()
+    const timer = setTimeout(() => {
+      void fetchInvoicesWithAuth(SALES_API_BASE_URLS)
+        .then((data) => setInvoiceRecords(data))
+        .catch(() => toast.error("Failed to load invoice list"))
+        .finally(() => setIsLoadingInvoices(false))
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [])
 
   const addInvoiceItem = () => {
@@ -175,7 +176,7 @@ export function SalesContent() {
       let productData = null
       for (const baseUrl of SALES_API_BASE_URLS) {
         try {
-          const response = await fetch(`${baseUrl}/v1/products/sku/${sku}`, {
+          const response = await authFetch(`${baseUrl}/v1/products/sku/${sku}`, {
             headers: getAuthHeaders(),
           })
           if (response.ok) {
@@ -234,7 +235,7 @@ export function SalesContent() {
       if (response.ok) {
         toast.success("Sale confirmed!", { description: `Invoice ${invoiceNumber} saved successfully.` })
         setCustomerName("")
-        setInvoiceNumber(`INV-${Date.now()}`)
+        setInvoiceSequence((current) => current + 1)
         setInvoiceItems([])
         await loadInvoices()
       } else {
@@ -248,7 +249,7 @@ export function SalesContent() {
 
   const handleCancel = () => {
     setCustomerName("")
-    setInvoiceNumber(`INV-${Date.now()}`)
+    setInvoiceSequence((current) => current + 1)
     setInvoiceItems([])
   }
 

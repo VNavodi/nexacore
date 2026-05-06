@@ -1,3 +1,5 @@
+import { authFetch, getAuthHeaders } from "@/lib/auth-fetch"
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 const API_BASE_URLS = API_BASE_URL
   ? [API_BASE_URL]
@@ -17,7 +19,7 @@ export class ReportAPI {
     for (let i = 0; i < API_BASE_URLS.length; i++) {
       const baseUrl = API_BASE_URLS[i]
       try {
-        const response = await fetch(`${baseUrl}${path}`, init)
+        const response = await authFetch(`${baseUrl}${path}`, init)
         lastResponse = response
 
         const shouldRetry =
@@ -43,21 +45,10 @@ export class ReportAPI {
     throw lastError ?? new Error("Network request failed")
   }
 
-  private static getAuthHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {}
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token")
-      if (token) {
-        headers.Authorization = `Bearer ${token}`
-      }
-    }
-    return headers
-  }
-
   static async getSalesSummary(): Promise<SalesSummaryResponse[]> {
     const response = await this.requestWithFallback("/invoices/summary", {
       method: "GET",
-      headers: this.getAuthHeaders(),
+      headers: getAuthHeaders(),
     })
 
     if (!response.ok) {
