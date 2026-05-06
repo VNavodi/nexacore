@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useId } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Plus, Trash2, Eye, TrendingDown } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -72,7 +72,24 @@ async function fetchInvoicesWithAuth(baseUrls: string[]): Promise<InvoiceRecord[
 }
 
 export function SalesContent() {
-  const invoiceSeed = useId().replace(/:/g, "")
+  const sessionTimestamp = useRef(0)
+  const invoiceCounterRef = useRef(0)
+  const [invoiceNumber, setInvoiceNumber] = useState("INV-0-0")
+  
+  const getNewInvoiceNumber = () => {
+    invoiceCounterRef.current += 1
+    return `INV-${sessionTimestamp.current}-${invoiceCounterRef.current}`
+  }
+
+  useEffect(() => {
+    const timestamp = Date.now()
+    sessionTimestamp.current = timestamp
+    invoiceCounterRef.current = 1
+    setTimeout(() => {
+      setInvoiceNumber(`INV-${timestamp}-1`)
+    }, 0)
+  }, [])
+
   const postInvoiceWithFallback = async (payload: unknown) => {
     let lastResponse: Response | null = null
     let lastError: Error | null = null
@@ -118,9 +135,7 @@ export function SalesContent() {
   const [appliedEndDate, setAppliedEndDate] = useState("")
 
   const [customerName, setCustomerName] = useState("")
-  const [invoiceSequence, setInvoiceSequence] = useState(1)
   const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().split("T")[0])
-  const invoiceNumber = `INV-${invoiceSeed}-${invoiceSequence}`
 
   const loadInvoices = async () => {
     setIsLoadingInvoices(true)
@@ -235,7 +250,7 @@ export function SalesContent() {
       if (response.ok) {
         toast.success("Sale confirmed!", { description: `Invoice ${invoiceNumber} saved successfully.` })
         setCustomerName("")
-        setInvoiceSequence((current) => current + 1)
+        setInvoiceNumber(getNewInvoiceNumber())
         setInvoiceItems([])
         await loadInvoices()
       } else {
@@ -249,7 +264,7 @@ export function SalesContent() {
 
   const handleCancel = () => {
     setCustomerName("")
-    setInvoiceSequence((current) => current + 1)
+    setInvoiceNumber(getNewInvoiceNumber())
     setInvoiceItems([])
   }
 
