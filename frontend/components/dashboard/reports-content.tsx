@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { ReportAPI, SalesSummaryResponse } from "@/lib/api/reportAPI"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 import {
   Calendar,
   Download,
@@ -12,12 +13,22 @@ import {
   Users,
   Receipt,
   FileSpreadsheet,
+  TrendingUp,
+  DollarSign,
+  Package,
+  PieChart,
+  Box,
+  AlertTriangle,
+  CreditCard,
+  ChevronRight,
+  TrendingDown,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Progress } from "@/components/ui/progress"
 import {
   Table,
   TableBody,
@@ -45,7 +56,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { Bar, BarChart, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, XAxis, YAxis, Pie, PieChart as RechartsPieChart, Cell, ResponsiveContainer } from "recharts"
 
 // Sample data for other reports
 
@@ -64,20 +75,57 @@ const stockValuationData = [
   { item: "Casual Shorts - Khaki", sku: "SKU-005", qty: 120, avgCost: 650, totalValue: 78000 },
 ]
 
-const udhanaAgingData = [
-  { customer: "ABC Traders", total: 125000, d30: 45000, d60: 35000, d90: 25000, d90plus: 20000 },
-  { customer: "XYZ Retail", total: 85000, d30: 60000, d60: 25000, d90: 0, d90plus: 0 },
-  { customer: "Fashion Hub", total: 210000, d30: 80000, d60: 70000, d90: 40000, d90plus: 20000 },
-  { customer: "Style Corner", total: 65000, d30: 40000, d60: 15000, d90: 10000, d90plus: 0 },
-  { customer: "Metro Garments", total: 180000, d30: 50000, d60: 60000, d90: 45000, d90plus: 25000 },
+const profitAnalysisData = [
+  { sku: "SKU-001", item: "Cotton T-Shirt - White", initialCost: 450, saleCost: 750, profit: 300 },
+  { sku: "SKU-002", item: "Denim Jeans - Blue", initialCost: 1200, saleCost: 2200, profit: 1000 },
+  { sku: "SKU-003", item: "Summer Dress - Floral", initialCost: 800, saleCost: 1500, profit: 700 },
+  { sku: "SKU-004", item: "Polo Shirt - Navy", initialCost: 550, saleCost: 950, profit: 400 },
+  { sku: "SKU-005", item: "Casual Shorts - Khaki", initialCost: 650, saleCost: 1100, profit: 450 },
 ]
 
-const taxSummaryData = [
-  { type: "VAT (15%)", taxable: 850000, taxAmount: 127500 },
-  { type: "SSCL (2.5%)", taxable: 720000, taxAmount: 18000 },
-  { type: "PAL (5%)", taxable: 180000, taxAmount: 9000 },
-  { type: "Zero Rated", taxable: 250000, taxAmount: 0 },
+const weeklyProfitData = [
+  { day: "Mon", cost: 30000, profit: 15000 },
+  { day: "Tue", cost: 24000, profit: 8000 },
+  { day: "Wed", cost: 36000, profit: 22000 },
+  { day: "Thu", cost: 27000, profit: 14000 },
+  { day: "Fri", cost: 47000, profit: 28000 },
+  { day: "Sat", cost: 50000, profit: 32000 },
+  { day: "Sun", cost: 37000, profit: 18000 },
 ]
+
+const categoryData = [
+  { name: "Apparel", value: 40, color: "#3b82f6" },
+  { name: "Electronics", value: 24, color: "#10b981" },
+  { name: "Accessories", value: 14, color: "#f59e0b" },
+  { name: "Other", value: 22, color: "#ef4444" },
+]
+
+const lowStockItems = [
+  { item: "Cotton T-Shirt", sku: "SKU-014", stock: 4, status: "Critical" },
+  { item: "Denim Jeans", sku: "SKU-023", stock: 11, status: "Low" },
+  { item: "Polo Shirt", sku: "SKU-045", stock: 7, status: "Critical" },
+  { item: "Casual Shorts", sku: "SKU-031", stock: 18, status: "Low" },
+  { item: "Summer Dress", sku: "SKU-009", stock: 22, status: "OK" },
+]
+
+const topSellingItems = [
+  { item: "Rice 5kg", sales: 4200, progress: 85 },
+  { item: "Milk 1L", sales: 3380, progress: 70 },
+  { item: "USB cable", sales: 2740, progress: 55 },
+  { item: "Bread loaf", sales: 2190, progress: 45 },
+  { item: "Orange juice", sales: 1600, progress: 30 },
+]
+
+const profitChartConfig = {
+  cost: {
+    label: "Revenue (Cost part)",
+    color: "#fecaca", // Light red
+  },
+  profit: {
+    label: "Profit",
+    color: "#e04f4f", // Nexacore Red
+  },
+}
 
 const EmptyState = ({ onRun }: { onRun: () => void }) => (
   <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -99,6 +147,7 @@ export function ReportsContent() {
   const [hasData, setHasData] = useState(true)
   const [isSalesLoading, setIsSalesLoading] = useState(false)
   const [salesSummary, setSalesSummary] = useState<SalesSummaryResponse[]>([])
+  const [period, setPeriod] = useState("this-month")
 
   useEffect(() => {
     if (activeTab === "sales-summary") {
@@ -136,11 +185,19 @@ export function ReportsContent() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">Reports & Analytics</h1>
+        <Button variant="outline" size="sm">
+          <Download className="h-4 w-4 mr-2" />
+          Export PDF
+        </Button>
+      </div>
+
       {/* Report Selector Tabs */}
       <Card>
         <CardContent className="p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="sales-summary" className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
                 Sales Summary
@@ -149,13 +206,9 @@ export function ReportsContent() {
                 <FileSpreadsheet className="h-4 w-4" />
                 Stock Valuation
               </TabsTrigger>
-              <TabsTrigger value="udhana-aging" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Udhana Aging
-              </TabsTrigger>
-              <TabsTrigger value="tax-summary" className="flex items-center gap-2">
-                <Receipt className="h-4 w-4" />
-                Tax Summary
+              <TabsTrigger value="profit-analysis" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Profit Analysis
               </TabsTrigger>
               <TabsTrigger value="custom-export" className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
@@ -169,107 +222,78 @@ export function ReportsContent() {
       {/* Filters Row */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Date Range */}
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="date"
-                  className="pl-10 w-40"
-                  defaultValue="2024-01-01"
-                />
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Period Selector */}
+              <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg">
+                <Button 
+                  variant={period === "this-month" ? "default" : "ghost"} 
+                  size="sm" 
+                  onClick={() => setPeriod("this-month")}
+                  className="text-xs h-8"
+                >
+                  This month
+                </Button>
+                <Button 
+                  variant={period === "last-7-days" ? "default" : "ghost"} 
+                  size="sm" 
+                  onClick={() => setPeriod("last-7-days")}
+                  className="text-xs h-8"
+                >
+                  Last 7 days
+                </Button>
+                <Button 
+                  variant={period === "last-3-months" ? "default" : "ghost"} 
+                  size="sm" 
+                  onClick={() => setPeriod("last-3-months")}
+                  className="text-xs h-8"
+                >
+                  Last 3 months
+                </Button>
+                <Button 
+                  variant={period === "custom" ? "default" : "ghost"} 
+                  size="sm" 
+                  onClick={() => setPeriod("custom")}
+                  className="text-xs h-8"
+                >
+                  Custom
+                </Button>
               </div>
-              <span className="text-muted-foreground">to</span>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="date"
-                  className="pl-10 w-40"
-                  defaultValue="2024-01-31"
-                />
+
+              <div className="h-8 w-px bg-gray-200 mx-2" />
+
+              {/* Category Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-500 uppercase">Category:</span>
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-32 h-8 text-xs">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="apparel">Apparel</SelectItem>
+                    <SelectItem value="electronics">Electronics</SelectItem>
+                    <SelectItem value="grocery">Grocery</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            {/* Category Filter */}
-            <Select>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-             
-              <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="electronics">Electronics</SelectItem>
-                  <SelectItem value="grocery">Grocery</SelectItem>
-                  <SelectItem value="kitchenware">Kitchenware</SelectItem>
-                  <SelectItem value="apparel">Apparel</SelectItem>
-                  <SelectItem value="health">Health</SelectItem>
-                </SelectContent>
-            </Select>
-
-            {/* Supplier Filter */}
-            {/* <Select>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Supplier" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Suppliers</SelectItem>
-                <SelectItem value="supplier-1">ABC Textiles</SelectItem>
-                <SelectItem value="supplier-2">XYZ Fabrics</SelectItem>
-                <SelectItem value="supplier-3">Fashion Imports</SelectItem>
-              </SelectContent>
-            </Select> */}
-
-            {/* Customer Filter */}
-            {/* <Select>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Customer" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Customers</SelectItem>
-                <SelectItem value="customer-1">ABC Traders</SelectItem>
-                <SelectItem value="customer-2">XYZ Retail</SelectItem>
-                <SelectItem value="customer-3">Fashion Hub</SelectItem>
-              </SelectContent>
-            </Select> */}
-
-            <div className="flex items-center gap-2 ml-auto">
-              <Button onClick={() => {
-                setHasData(true)
-                if (activeTab === "sales-summary") loadSalesSummary()
-              }}>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={() => setHasData(true)}>
                 Apply Filters
               </Button>
-              
-              {/* <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                    <ChevronDown className="h-4 w-4 ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Export as CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Export as PDF
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu> */}
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Report Content Area */}
-      <Card>
-        <CardContent className="p-4 min-h-[500px]">
+      <div className="min-h-[500px]">
           {!hasData ? (
-            <EmptyState onRun={() => setHasData(true)} />
+            <Card className="p-12">
+              <EmptyState onRun={() => setHasData(true)} />
+            </Card>
           ) : (
             <>
               {/* Sales Summary Report */}
@@ -283,7 +307,7 @@ export function ReportsContent() {
                   </div>
                   
                   {/* Chart */}
-                  <div className="h-64 border rounded-lg p-4">
+                  <div className="h-64 border rounded-lg p-4 bg-white">
                     <ChartContainer config={chartConfig} className="h-full w-full">
                       <BarChart data={chartData}>
                         <XAxis dataKey="name" />
@@ -295,45 +319,47 @@ export function ReportsContent() {
                   </div>
 
                   {/* Table */}
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Invoice Count</TableHead>
-                        <TableHead className="text-right">Grand Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isSalesLoading ? (
+                  <Card>
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                            Loading summary...
-                          </TableCell>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-right">Invoice Count</TableHead>
+                          <TableHead className="text-right">Grand Total</TableHead>
                         </TableRow>
-                      ) : salesSummary.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                            No sales data found for the selected period
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        salesSummary.map((row, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{row.date}</TableCell>
-                            <TableCell className="text-right">{row.invoiceCount}</TableCell>
-                            <TableCell className="text-right font-medium">{formatCurrency(row.totalAmount)}</TableCell>
+                      </TableHeader>
+                      <TableBody>
+                        {isSalesLoading ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                              Loading summary...
+                            </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                    <TableFooter>
-                      <TableRow>
-                        <TableCell className="font-semibold">Total</TableCell>
-                        <TableCell className="text-right font-semibold">{totalInvoices}</TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(grandTotalAll)}</TableCell>
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
+                        ) : salesSummary.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                              No sales data found for the selected period
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          salesSummary.map((row, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{row.date}</TableCell>
+                              <TableCell className="text-right">{row.invoiceCount}</TableCell>
+                              <TableCell className="text-right font-medium">{formatCurrency(row.totalAmount)}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell className="font-semibold">Total</TableCell>
+                          <TableCell className="text-right font-semibold">{totalInvoices}</TableCell>
+                          <TableCell className="text-right font-semibold">{formatCurrency(grandTotalAll)}</TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    </Table>
+                  </Card>
                 </div>
               )}
 
@@ -345,159 +371,170 @@ export function ReportsContent() {
                     <Badge variant="secondary">As of today</Badge>
                   </div>
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Item</TableHead>
-                        <TableHead>SKU</TableHead>
-                        <TableHead className="text-right">Qty on Hand</TableHead>
-                        <TableHead className="text-right">Avg Cost</TableHead>
-                        <TableHead className="text-right">Total Value</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {stockValuationData.map((row, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{row.item}</TableCell>
-                          <TableCell className="text-muted-foreground">{row.sku}</TableCell>
-                          <TableCell className="text-right">{row.qty}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(row.avgCost)}</TableCell>
-                          <TableCell className="text-right font-medium">{formatCurrency(row.totalValue)}</TableCell>
+                  <Card>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead>SKU</TableHead>
+                          <TableHead className="text-right">Qty on Hand</TableHead>
+                          <TableHead className="text-right">Total Value</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                    <TableFooter>
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-right font-semibold">
-                          Total Inventory Value
-                        </TableCell>
-                        <TableCell className="text-right text-xl font-bold">
-                          {formatCurrency(387500)}
-                        </TableCell>
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {stockValuationData.map((row, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{row.item}</TableCell>
+                            <TableCell className="text-muted-foreground">{row.sku}</TableCell>
+                            <TableCell className="text-right">{row.qty}</TableCell>
+                            <TableCell className="text-right font-medium">{formatCurrency(row.totalValue)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-right font-semibold">
+                            Total Inventory Value
+                          </TableCell>
+                          <TableCell className="text-right text-xl font-bold">
+                            {formatCurrency(387500)}
+                          </TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    </Table>
+                  </Card>
                 </div>
               )}
 
-              {/* Udhana Aging Report */}
-              {activeTab === "udhana-aging" && (
+              {/* Profit Analysis Report */}
+              {activeTab === "profit-analysis" && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Udhana Aging Report</h3>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">0-30d</Badge>
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">31-60d</Badge>
-                      <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">61-90d</Badge>
-                      <Badge variant="destructive">90+d</Badge>
-                    </div>
+                    <h3 className="text-lg font-semibold">Profit Analysis Report</h3>
+                    <Badge variant="secondary">Overview</Badge>
                   </div>
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Customer</TableHead>
-                        <TableHead className="text-right">Total Outstanding</TableHead>
-                        <TableHead className="text-right">0-30 Days</TableHead>
-                        <TableHead className="text-right">31-60 Days</TableHead>
-                        <TableHead className="text-right">61-90 Days</TableHead>
-                        <TableHead className="text-right">90+ Days</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {udhanaAgingData.map((row, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{row.customer}</TableCell>
-                          <TableCell className="text-right font-semibold">{formatCurrency(row.total)}</TableCell>
-                          <TableCell className="text-right">
-                            <span className="text-green-600">{formatCurrency(row.d30)}</span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className="text-yellow-600">{formatCurrency(row.d60)}</span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className="text-orange-600">{formatCurrency(row.d90)}</span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className="text-destructive font-medium">{formatCurrency(row.d90plus)}</span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                    <TableFooter>
-                      <TableRow>
-                        <TableCell className="font-semibold">Total</TableCell>
-                        <TableCell className="text-right font-bold">{formatCurrency(665000)}</TableCell>
-                        <TableCell className="text-right text-green-600 font-semibold">{formatCurrency(275000)}</TableCell>
-                        <TableCell className="text-right text-yellow-600 font-semibold">{formatCurrency(205000)}</TableCell>
-                        <TableCell className="text-right text-orange-600 font-semibold">{formatCurrency(120000)}</TableCell>
-                        <TableCell className="text-right text-destructive font-semibold">{formatCurrency(65000)}</TableCell>
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
-                </div>
-              )}
+                  {/* Profit Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="bg-white border-gray-200">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Potential Profit</p>
+                          <p className="text-3xl font-black text-[#e04f4f] mt-2">LKR 280,250</p>
+                          <div className="flex items-center gap-1 mt-4 text-[#e04f4f]">
+                            <TrendingUp className="h-3 w-3" />
+                            <span className="text-xs font-medium">24% increase from last month</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-              {/* Tax Summary Report */}
-              {activeTab === "tax-summary" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Tax Summary Report</h3>
-                    <Badge variant="secondary">Jan 2024</Badge>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-4 mb-6">
-                    <Card>
-                      <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground">VAT Collected</p>
-                        <p className="text-2xl font-bold text-primary">{formatCurrency(127500)}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground">SSCL Collected</p>
-                        <p className="text-2xl font-bold text-primary">{formatCurrency(18000)}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground">PAL Collected</p>
-                        <p className="text-2xl font-bold text-primary">{formatCurrency(9000)}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground">Total Tax</p>
-                        <p className="text-2xl font-bold">{formatCurrency(154500)}</p>
+                    <Card className="bg-white border-gray-200">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Most Profitable SKU</p>
+                          <p className="text-3xl font-black text-[#e04f4f] mt-2">SKU-002</p>
+                          <div className="flex items-center gap-1 mt-4 text-[#e04f4f]">
+                            <Package className="h-3 w-3" />
+                            <span className="text-xs font-medium">Denim Jeans - Blue</span>
+                          </div>
+                        </div>
                       </CardContent>
                     </Card>
                   </div>
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tax Type</TableHead>
-                        <TableHead className="text-right">Taxable Amount</TableHead>
-                        <TableHead className="text-right">Tax Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {taxSummaryData.map((row, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{row.type}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(row.taxable)}</TableCell>
-                          <TableCell className="text-right font-medium">{formatCurrency(row.taxAmount)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                    <TableFooter>
-                      <TableRow>
-                        <TableCell className="font-semibold">Grand Total</TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(2000000)}</TableCell>
-                        <TableCell className="text-right text-xl font-bold">{formatCurrency(154500)}</TableCell>
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
+                  {/* Weekly Revenue vs Profit Chart */}
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5 text-[#e04f4f]" />
+                        <CardTitle className="text-lg font-bold">Weekly Revenue vs Profit</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-3 w-3 rounded-full bg-[#fecaca]" />
+                          <span className="text-xs text-muted-foreground">Revenue</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-3 w-3 rounded-full bg-[#e04f4f]" />
+                          <span className="text-xs text-muted-foreground">Profit</span>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="h-72 w-full">
+                        <ChartContainer config={profitChartConfig} className="h-full w-full">
+                          <BarChart data={weeklyProfitData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+                            <XAxis 
+                              dataKey="day" 
+                              axisLine={false} 
+                              tickLine={false}
+                              tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12, fontWeight: 600 }}
+                              dy={10}
+                            />
+                            <YAxis hide />
+                            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                            <Bar 
+                              dataKey="cost" 
+                              fill="#fecaca" 
+                              stackId="a"
+                              radius={[0, 0, 0, 0]} 
+                              barSize={40}
+                              background={{ fill: '#f8fafc', radius: 4 }}
+                            />
+                            <Bar 
+                              dataKey="profit" 
+                              fill="#e04f4f" 
+                              stackId="a"
+                              radius={[4, 4, 0, 0]} 
+                              barSize={40}
+                            />
+                          </BarChart>
+                        </ChartContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Item Profit Table */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Best Profitable 3 Items</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>SKU Number</TableHead>
+                            <TableHead>Item Name</TableHead>
+                            <TableHead className="text-right">Initial Cost</TableHead>
+                            <TableHead className="text-right">Sale Cost</TableHead>
+                            <TableHead className="text-right">Profit</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {profitAnalysisData.map((row, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-mono text-xs">{row.sku}</TableCell>
+                              <TableCell className="font-medium">{row.item}</TableCell>
+                              <TableCell className="text-right">{formatCurrency(row.initialCost)}</TableCell>
+                              <TableCell className="text-right">{formatCurrency(row.saleCost)}</TableCell>
+                              <TableCell className="text-right font-bold text-[#e04f4f]">
+                                {formatCurrency(row.profit)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                        <TableFooter>
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-right font-semibold">Total Average Profit</TableCell>
+                            <TableCell className="text-right text-lg font-bold text-[#e04f4f]">
+                              {formatCurrency(570)}
+                            </TableCell>
+                          </TableRow>
+                        </TableFooter>
+                      </Table>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
 
@@ -557,8 +594,7 @@ export function ReportsContent() {
               )}
             </>
           )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   )
 }
