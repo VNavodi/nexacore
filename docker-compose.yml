@@ -18,7 +18,7 @@ services:
     image: postgres:16-alpine
     # container_name removed to avoid confusion; use service name 'nexacore-db' for Docker Compose commands
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_DB: inventorydb
       POSTGRES_USER: nexacore

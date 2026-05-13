@@ -7,7 +7,7 @@ spring:
     name: nexacore-inventory-api
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/inventorydb}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/inventorydb}
     username: ${SPRING_DATASOURCE_USERNAME:nexacore}
     password: ${SPRING_DATASOURCE_PASSWORD:nexacore123}
     driver-class-name: org.postgresql.Driver
