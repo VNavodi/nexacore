@@ -84,9 +84,3 @@ Error format is standardized with:
 - message
 - path
 
-## Notes for Future Microservices Migration
-
-- Keep external API contracts under `/api/v1/*` stable.
-- Avoid cross-module direct data access; go through services.
-- Extract modules one by one (recommended order: `integrations` or `stock` first).
-- Introduce gateway and per-service database only when scaling requires it.
